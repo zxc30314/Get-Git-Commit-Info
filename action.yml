@@ -9,114 +9,120 @@ inputs:
 outputs:
   username:
     description: "username of target workflow jobs"
-    value: ${{ env.username }}
+    value: ${{ steps.extract_commit_info.outputs.username }}
   sha_short:
     description: "sha_short of target workflow jobs"
-    value: ${{ env.sha_short }}
+    value: ${{ steps.extract_commit_info.outputs.sha_short }}
   url:
     description: "url of target workflow jobs"
-    value: ${{ env.url }}
+    value: ${{ steps.extract_commit_info.outputs.url }}
   commit_message:
     description: "commit_message of target workflow jobs"
-    value: ${{ env.commit_message }}
+    value: ${{ steps.extract_commit_info.outputs.commit_message }}
 
 runs:
   using: 'composite'
   steps:
-    - id: info
-      name: Declare some variables for Linux
-      if: ${{ !cancelled() && runner.os == 'Linux' }}
+    - id: extract_commit_info_linux_pull_request
+      name: Extract commit info for Linux (Pull Request)
+      if: ${{ runner.os == 'Linux' && github.event_name == 'pull_request' }}
       shell: bash
       run: |
-          commit_message=$(git log -1 --no-merges --pretty=%B)
-          echo "commit_message=$commit_message" >> $GITHUB_ENV
-          echo $commit_message
+        sha=${{ github.event.pull_request.head.sha }}
+        sha_short=$(echo "$sha" | cut -c 1-7)
+        branch_ref="${GITHUB_REF#refs/heads/}"
+        converted_ref=$(echo "$branch_ref" | sed -n 's|refs/pull/\([0-9]*\)/merge|pull/\1|p')
+        url="https://github.com/${{ github.event.repository.full_name }}/$converted_ref/commits/$sha"
+        username=$(curl -H 'Accept: application/vnd.github.v3+json' -H "Authorization: Bearer ${{ inputs.ACCESS_TOKEN }}" https://api.github.com/repos/${{ github.event.repository.full_name }}/commits/$sha | jq -r '.author.login')
+        
+        # 输出到 GitHub 输出文件中
+        echo "commit_message=$commit_message" >> $GITHUB_OUTPUT
+        echo "sha_short=$sha_short" >> $GITHUB_OUTPUT
+        echo "url=$url" >> $GITHUB_OUTPUT
+        echo "username=$username" >> $GITHUB_OUTPUT
 
-    - name: Declare variables based on Pull Request event type for Linux
-      if: ${{  !cancelled() && runner.os == 'Linux' && github.event_name == 'pull_request' }}
+    - id: extract_commit_info_linux_push
+      name: Extract commit info for Linux (Push)
+      if: ${{ runner.os == 'Linux' && github.event_name == 'push' }}
       shell: bash
       run: |
-          sha=${{ github.event.pull_request.head.sha }}
-          sha_short=$(echo "$sha" | cut -c 1-7)
-          branch_ref="${GITHUB_REF#refs/heads/}"
-          converted_ref=$(echo "$branch_ref" | sed -n 's|refs/pull/\([0-9]*\)/merge|pull/\1|p')
-          url="https://github.com/${{ github.event.repository.full_name }}/$converted_ref/commits/$sha";
-          username=$(curl -H 'Accept: application/vnd.github.v3+json' -H "Authorization: Bearer ${{inputs.ACCESS_TOKEN}}" https://api.github.com/repos/${{ github.event.repository.full_name }}/commits/$sha | jq -r '.author.login')
-          echo "sha_short=$sha_short" >> "$GITHUB_ENV"
-          echo "url=$url" >> "$GITHUB_ENV"
-          echo "username=$username" >> "$GITHUB_ENV"
-          echo $sha
-          echo $sha_short
-          echo $converted_ref
-          echo $url
-          echo $username
+        commit_message=$(git log -1 --no-merges --pretty=%B)
+        sha_short=$(git rev-parse --short $GITHUB_SHA)
+        url="https://github.com/${{ github.event.repository.full_name }}/commit/$GITHUB_SHA"
+        username=$(curl -H 'Accept: application/vnd.github.v3+json' -H "Authorization: Bearer ${{ inputs.ACCESS_TOKEN }}" https://api.github.com/repos/${{ github.event.repository.full_name }}/commits/$GITHUB_SHA | jq -r '.author.login')
 
-    - name: Declare variables based on Push event for Linux
-      if: ${{  !cancelled() && runner.os == 'Linux' && github.event_name == 'push' }}
-      shell: bash
-      run: |
-          sha=${{ github.sha }}
-          url=https://github.com/${{ github.event.repository.full_name }}/commit/$sha
-          echo "url=$url" >> $GITHUB_ENV
-          sha_short=$(git rev-parse --short "$GITHUB_SHA")
-          echo "sha_short=$sha_short">> "$GITHUB_ENV
-          username=$(curl -H 'Accept: application/vnd.github.v3+json' -H "Authorization: Bearer ${{inputs.ACCESS_TOKEN}}" https://api.github.com/repos/${{ github.event.repository.full_name }}/commits/$sha | jq -r '.author.login')
-          echo "username=$username" >> "$GITHUB_ENV"
-          echo $sha
-          echo $sha_short
-          echo $url
-          echo $username
+        # 输出到 GitHub 输出文件中
+        echo "commit_message=$commit_message" >> $GITHUB_OUTPUT
+        echo "sha_short=$sha_short" >> $GITHUB_OUTPUT
+        echo "url=$url" >> $GITHUB_OUTPUT
+        echo "username=$username" >> $GITHUB_OUTPUT
 
-    - name: Declare variables for Windows
-      if: ${{!cancelled() && runner.os == 'Windows' }}
+    - id: extract_commit_info_windows_pull_request
+      name: Extract commit info for Windows (Pull Request)
+      if: ${{ runner.os == 'Windows' && github.event_name == 'pull_request' }}
       shell: powershell
       run: |
-          $commit_message = $(git log -1 --no-merges --pretty=%B)
-          Write-Host "commit_message=$commit_message" >> $env:GITHUB_ENV
-          Write-Host $commit_message
-              
-    - name: Declare variables based on Pull Request event type for Windows 
-      if: ${{ !cancelled() && runner.os == 'Windows' && github.event_name == 'pull_request'}}
-      shell: powershell
-      run: |
-          $branch_ref = $env:GITHUB_REF -replace '^refs/heads/', ''
-          $converted_ref = ($branch_ref -replace '^refs/pull/(\d+)/merge$', 'pull/$1')
-          Write-Host "converted_ref=$converted_ref" >> $env:GITHUB_ENV
-          $sha = "${{ github.event.pull_request.head.sha }}"
-          $sha_short = $sha.Substring(0, 7)
-          Write-Host "sha_short=$sha_short" >> $env:GITHUB_ENV
-          $url = "https://github.com/${{ github.event.repository.full_name }}/$converted_ref/commits/$sha"
-          Write-Host "url=$url" >> $env:GITHUB_ENV
-          $authHeader = @{
-              "Authorization" = "Bearer ${{inputs.ACCESS_TOKEN}}"
-              "Accept" = "application/vnd.github.v3+json"
-          }
-          $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.event.repository.full_name }}/commits/$sha" -Headers $authHeader    
-          $username = $response.author.login
-          Write-Host "username=$username" >> $env:GITHUB_ENV
-          Write-Host $sha
-          Write-Host $sha_short
-          Write-Host $converted_ref
-          Write-Host $url
-          Write-Host $username
+        $sha = "${{ github.event.pull_request.head.sha }}"
+        $sha_short = $sha.Substring(0, 7)
+        $branch_ref = $env:GITHUB_REF -replace '^refs/heads/', ''
+        $converted_ref = ($branch_ref -replace '^refs/pull/(\d+)/merge$', 'pull/$1')
+        $url = "https://github.com/${{ github.event.repository.full_name }}/$converted_ref/commits/$sha"
+        $authHeader = @{"Authorization" = "Bearer ${{ inputs.ACCESS_TOKEN }}" "Accept" = "application/vnd.github.v3+json"}
+        $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.event.repository.full_name }}/commits/$sha" -Headers $authHeader
+        $username = $response.author.login
 
-    - name: Declare variables based on Push event for Windows on Push
-      if: ${{  !cancelled() && runner.os == 'Windows' && github.event_name == 'push' }}
+        # 设置输出到 GITHUB_OUTPUT
+        echo "commit_message=$commit_message" >> $GITHUB_OUTPUT
+        echo "sha_short=$sha_short" >> $GITHUB_OUTPUT
+        echo "url=$url" >> $GITHUB_OUTPUT
+        echo "username=$username" >> $GITHUB_OUTPUT
+
+    - id: extract_commit_info_windows_push
+      name: Extract commit info for Windows (Push)
+      if: ${{ runner.os == 'Windows' && github.event_name == 'push' }}
       shell: powershell
       run: |
-          $sha = "${{ github.sha }}"
-          $sha_short = git rev-parse --short $sha
-          $url = "https://github.com/${{ github.event.repository.full_name }}/commit/$sha"
-          Write-Host "url=$url" >> $env:GITHUB_ENV
-          $authHeader = @{
-              "Authorization" = "Bearer ${{inputs.ACCESS_TOKEN}}"
-              "Accept" = "application/vnd.github.v3+json"
-          }
-          $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.event.repository.full_name }}/commits/$sha" -Headers $authHeader
-          $username = $response.author.login
-          Write-Host "username=$username" >> $env:GITHUB_ENV
-          Write-Host "url=$url" >> $env:GITHUB_ENV
-          Write-Host $sha
-          Write-Host $sha_short
-          Write-Host $url
-          Write-Host $username
+        $commit_message = $(git log -1 --no-merges --pretty=%B)
+        Write-Host "commit_message=$commit_message" >> $env:GITHUB_ENV
+        $sha_short = git rev-parse --short $GITHUB_SHA
+        $url = "https://github.com/${{ github.event.repository.full_name }}/commit/$GITHUB_SHA"
+        $authHeader = @{"Authorization" = "Bearer ${{ inputs.ACCESS_TOKEN }}" "Accept" = "application/vnd.github.v3+json"}
+        $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.event.repository.full_name }}/commits/$GITHUB_SHA" -Headers $authHeader
+        $username = $response.author.login
+
+        # 设置输出到 GITHUB_OUTPUT
+        echo "commit_message=$commit_message" >> $GITHUB_OUTPUT
+        echo "sha_short=$sha_short" >> $GITHUB_OUTPUT
+        echo "url=$url" >> $GITHUB_OUTPUT
+        echo "username=$username" >> $GITHUB_OUTPUT
+
+    - id: combine_commit_info
+      name: Combine commit info from Linux and Windows
+      run: |
+        # Linux 提取的信息
+        if [ -n "${{ steps.extract_commit_info_linux_pull_request.outputs.commit_message }}" ]; then
+          echo "Commit Message (Linux Pull Request): ${{ steps.extract_commit_info_linux_pull_request.outputs.commit_message }}"
+          echo "SHA Short (Linux Pull Request): ${{ steps.extract_commit_info_linux_pull_request.outputs.sha_short }}"
+          echo "URL (Linux Pull Request): ${{ steps.extract_commit_info_linux_pull_request.outputs.url }}"
+          echo "Username (Linux Pull Request): ${{ steps.extract_commit_info_linux_pull_request.outputs.username }}"
+        fi
+        if [ -n "${{ steps.extract_commit_info_linux_push.outputs.commit_message }}" ]; then
+          echo "Commit Message (Linux Push): ${{ steps.extract_commit_info_linux_push.outputs.commit_message }}"
+          echo "SHA Short (Linux Push): ${{ steps.extract_commit_info_linux_push.outputs.sha_short }}"
+          echo "URL (Linux Push): ${{ steps.extract_commit_info_linux_push.outputs.url }}"
+          echo "Username (Linux Push): ${{ steps.extract_commit_info_linux_push.outputs.username }}"
+        fi
+
+        # Windows 提取的信息
+        if [ -n "${{ steps.extract_commit_info_windows_pull_request.outputs.commit_message }}" ]; then
+          echo "Commit Message (Windows Pull Request): ${{ steps.extract_commit_info_windows_pull_request.outputs.commit_message }}"
+          echo "SHA Short (Windows Pull Request): ${{ steps.extract_commit_info_windows_pull_request.outputs.sha_short }}"
+          echo "URL (Windows Pull Request): ${{ steps.extract_commit_info_windows_pull_request.outputs.url }}"
+          echo "Username (Windows Pull Request): ${{ steps.extract_commit_info_windows_pull_request.outputs.username }}"
+        fi
+        if [ -n "${{ steps.extract_commit_info_windows_push.outputs.commit_message }}" ]; then
+          echo "Commit Message (Windows Push): ${{ steps.extract_commit_info_windows_push.outputs.commit_message }}"
+          echo "SHA Short (Windows Push): ${{ steps.extract_commit_info_windows_push.outputs.sha_short }}"
+          echo "URL (Windows Push): ${{ steps.extract_commit_info_windows_push.outputs.url }}"
+          echo "Username (Windows Push): ${{ steps.extract_commit_info_windows_push.outputs.username }}"
+        fi
