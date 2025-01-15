@@ -2,7 +2,7 @@
 
 This GitHub Action extracts commit information, such as the full SHA, short SHA, username of the commit author, commit message, and commit URL. It can be useful for workflows that need detailed commit metadata.
 
-This action is designed to work across platforms (Linux and Windows). It uses PowerShell (`pwsh`) to extract and process commit information.
+This action is designed to work across platforms (Linux, macOS, and Windows). It uses PowerShell (`pwsh`) to extract and process commit information.
 
 ## Inputs
 
