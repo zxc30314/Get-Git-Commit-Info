@@ -25,7 +25,7 @@ runs:
   steps:
     - name: Declare variables
       if: ${{ !cancelled() }}
-      id: info
+      id: extract_commit_info
       shell: pwsh
       run: |
         if ($env:GITHUB_EVENT_NAME -eq "pull_request") {
