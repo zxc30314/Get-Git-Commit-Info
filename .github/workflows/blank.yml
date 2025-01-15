@@ -3,6 +3,7 @@ name: Git Commit Info
 on: 
   workflow_dispatch:
   workflow_call:
+  push:
     
 jobs:
   declare_variables:
