@@ -10,6 +10,9 @@ outputs:
   username:
     description: "username of target workflow jobs"
     value: ${{ steps.extract_commit_info.outputs.username }}
+  sha:
+    description: "sha of target workflow jobs"
+    value: ${{ steps.extract_commit_info.outputs.sha }}
   sha_short:
     description: "sha_short of target workflow jobs"
     value: ${{ steps.extract_commit_info.outputs.sha_short }}
@@ -28,6 +31,7 @@ runs:
       id: extract_commit_info
       shell: pwsh
       run: |
+        # Extract SHA and other information based on the event type
         if ($env:GITHUB_EVENT_NAME -eq "pull_request") {
           $sha = "${{ github.event.pull_request.head.sha }}"
           $sha_short = $sha.Substring(0, 7)
@@ -40,19 +44,27 @@ runs:
           $url = "https://github.com/${{ github.repository }}/commit/$sha"
         }
 
+        # Set up authentication for GitHub API request
         $authHeader = @{
           "Authorization" = "Bearer ${{ inputs.ACCESS_TOKEN }}"
           "Accept" = "application/vnd.github.v3+json"
         }
+        
+        # Get commit message
         $commit_message = git log -1 --no-merges --pretty=%B
+        
+        # Fetch commit details from GitHub API
         $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/commits/$sha" -Headers $authHeader
         $username = $response.author.login
 
-        Write-Output "::set-output name=sha_short::$sha_short"
-        Write-Output "::set-output name=url::$url"
-        Write-Output "::set-output name=username::$username"
-        Write-Output "::set-output name=commit_message::$commit_message"
+        # Output results using the new GitHub Actions method
+        echo "sha=$sha" >> $GITHUB_OUTPUT
+        echo "sha_short=$sha_short" >> $GITHUB_OUTPUT
+        echo "url=$url" >> $GITHUB_OUTPUT
+        echo "username=$username" >> $GITHUB_OUTPUT
+        echo "commit_message=$commit_message" >> $GITHUB_OUTPUT
         
+        # Debug outputs for inspection
         Write-Host "Commit Message: $commit_message"
         Write-Host "Short sha: $sha_short"
         Write-Host "username: $username"
