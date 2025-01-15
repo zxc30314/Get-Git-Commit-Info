@@ -27,10 +27,43 @@ jobs:
       with:
         ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
+    - name: Extract Commit Info
+      run: |
+        sha=${{ steps.extract_commit_info.outputs.sha }}"
+        sha_short="${{ steps.extract_commit_info.outputs.sha_short }}"
+        url=${{ steps.extract_commit_info.outputs.url }}"
+        username=${{ steps.extract_commit_info.outputs.username }}"
+        commit_message= ${{ steps.extract_commit_info.outputs.commit_message }}"   
+
+        if [ -z "$sha" ]; then
+          echo "sha is empty. Exiting the workflow."
+          exit 1
+        fi
+
+        if [ -z "$sha_short" ]; then
+          echo "sha_short is empty. Exiting the workflow."
+          exit 1
+        fi
+
+        if [ -z "$url" ]; then
+          echo "url is empty. Exiting the workflow."
+          exit 1
+        fi
+
+        if [ -z "$username" ]; then
+          echo "username is empty. Exiting the workflow."
+          exit 1
+        fi
+
+        if [ -z "$commit_message" ]; then
+          echo "commit_message is empty. Exiting the workflow."
+          exit 1
+        fi
+        
     - name: Show Commit Information
       run: |
-          echo "Commit SHA: ${{ steps.extract_commit_info.outputs.sha }}"
-          echo "Commit Short SHA: ${{ steps.extract_commit_info.outputs.sha_short }}"
-          echo "Commit URL: ${{ steps.extract_commit_info.outputs.url }}"
-          echo "Commit Author: ${{ steps.extract_commit_info.outputs.username }}"
-          echo "Commit Message: ${{ steps.extract_commit_info.outputs.commit_message }}"   
+        echo "Commit SHA: ${{ steps.extract_commit_info.outputs.sha }}"
+        echo "Commit Short SHA: ${{ steps.extract_commit_info.outputs.sha_short }}"
+        echo "Commit URL: ${{ steps.extract_commit_info.outputs.url }}"
+        echo "Commit Author: ${{ steps.extract_commit_info.outputs.username }}"
+        echo "Commit Message: ${{ steps.extract_commit_info.outputs.commit_message }}"
