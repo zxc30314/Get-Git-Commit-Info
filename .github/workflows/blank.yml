@@ -21,15 +21,15 @@ jobs:
 
     - name: Declare some variables for Linux
       if: ${{ !cancelled() && runner.os == 'Linux' }}
-      shell: bash
+      shell: pwsh
       run: |
           commit_message=$(git log -1 --no-merges --pretty=%B)
           echo "commit_message=$commit_message" >> $GITHUB_ENV
           echo $commit_message
 
     - name: Declare variables based on Pull Request event type for Linux
-      if: ${{  !cancelled() && runner.os == 'Linux' && github.event_name == 'pull_request' }}
-      shell: bash
+      if: ${{  !cancelled()  && github.event_name == 'pull_request' }}
+      shell: pwsh
       run: |
           sha=${{ github.event.pull_request.head.sha }}
           sha_short=$(echo "$sha" | cut -c 1-7)
@@ -47,8 +47,8 @@ jobs:
           echo $username
 
     - name: Declare variables based on Push event for Linux
-      if: ${{  !cancelled() && runner.os == 'Linux' && github.event_name == 'push' }}
-      shell: bash
+      if: ${{  !cancelled() && github.event_name == 'push' }}
+      shell: pwsh
       run: |
           sha=${{ github.sha }}
           url=https://github.com/${{ github.event.repository.full_name }}/commit/$sha" >> "$GITHUB_ENV
