@@ -58,11 +58,11 @@ runs:
         $username = $response.author.login
 
         # Output results using the new GitHub Actions method
-        echo "sha=$sha" >> $GITHUB_OUTPUT
-        echo "sha_short=$sha_short" >> $GITHUB_OUTPUT
-        echo "url=$url" >> $GITHUB_OUTPUT
-        echo "username=$username" >> $GITHUB_OUTPUT
-        echo "commit_message=$commit_message" >> $GITHUB_OUTPUT
+        Write-Output "sha=$sha" >> $env:GITHUB_OUTPUT
+        Write-Output "sha_short=$sha_short" >> $env:GITHUB_OUTPUT
+        Write-Output "url=$url" >> $env:GITHUB_OUTPUT
+        Write-Output "username=$username" >> $env:GITHUB_OUTPUT
+        Write-Output "commit_message=$commit_message" >> $env:GITHUB_OUTPUT
 
         # Debug outputs for inspection
         Write-Host "Commit Message: $commit_message"
