@@ -29,7 +29,7 @@ runs:
           branch_ref="${GITHUB_REF#refs/heads/}"
           converted_ref=$(echo "$branch_ref" | sed -n 's|refs/pull/\([0-9]*\)/merge|pull/\1|p')
           url="https://github.com/${{ github.event.repository.full_name }}/$converted_ref/commits/$sha";
-          username=$(curl -H 'Accept: application/vnd.github.v3+json' -H "Authorization: Bearer ${{secrets.ACCESS_TOKEN}}" https://api.github.com/repos/${{ github.event.repository.full_name }}/commits/$sha | jq -r '.author.login')
+          username=$(curl -H 'Accept: application/vnd.github.v3+json' -H "Authorization: Bearer ${{inputs.ACCESS_TOKEN}}" https://api.github.com/repos/${{ github.event.repository.full_name }}/commits/$sha | jq -r '.author.login')
           echo "sha_short=$sha_short" >> "$GITHUB_ENV"
           echo "url=$url" >> "$GITHUB_ENV"
           echo "username=$username" >> "$GITHUB_ENV"
@@ -46,7 +46,7 @@ runs:
           sha=${{ github.sha }}
           url=https://github.com/${{ github.event.repository.full_name }}/commit/$sha" >> "$GITHUB_ENV
           sha_short=$(git rev-parse --short "$GITHUB_SHA")" 
-          username=$(curl -H 'Accept: application/vnd.github.v3+json' -H "Authorization: Bearer ${{secrets.ACCESS_TOKEN}}" https://api.github.com/repos/${{ github.event.repository.full_name }}/commits/$sha | jq -r '.author.login')
+          username=$(curl -H 'Accept: application/vnd.github.v3+json' -H "Authorization: Bearer ${{inputs.ACCESS_TOKEN}}" https://api.github.com/repos/${{ github.event.repository.full_name }}/commits/$sha | jq -r '.author.login')
           echo "sha_short=$sha_short">> "$GITHUB_ENV
           echo "url=$url" >> "$GITHUB_ENV"
           echo "username=$username" >> "$GITHUB_ENV"
@@ -76,7 +76,7 @@ runs:
           $url = "https://github.com/${{ github.event.repository.full_name }}/$converted_ref/commits/$sha"
           Write-Host "url=$url" >> $env:GITHUB_ENV
           $authHeader = @{
-              "Authorization" = "Bearer ${{secrets.ACCESS_TOKEN}}"
+              "Authorization" = "Bearer ${{inputs.ACCESS_TOKEN}}"
               "Accept" = "application/vnd.github.v3+json"
           }
           $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.event.repository.full_name }}/commits/$sha" -Headers $authHeader    
@@ -97,7 +97,7 @@ runs:
           $url = "https://github.com/${{ github.event.repository.full_name }}/commit/$sha"
           Write-Host "url=$url" >> $env:GITHUB_ENV
           $authHeader = @{
-              "Authorization" = "Bearer ${{secrets.ACCESS_TOKEN}}"
+              "Authorization" = "Bearer ${{inputs.ACCESS_TOKEN}}"
               "Accept" = "application/vnd.github.v3+json"
           }
           $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.event.repository.full_name }}/commits/$sha" -Headers $authHeader
