@@ -98,6 +98,7 @@ runs:
 
     - id: combine_commit_info
       name: Combine commit info from Linux and Windows
+      shell: bash
       run: |
         # Linux 提取的信息
         if [ -n "${{ steps.extract_commit_info_linux_pull_request.outputs.commit_message }}" ]; then
