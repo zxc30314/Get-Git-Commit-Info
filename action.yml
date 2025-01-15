@@ -9,20 +9,21 @@ inputs:
 outputs:
   username:
     description: "username of target workflow jobs"
-    value: ${{ steps.request.outputs.username }}
+    value: ${{ steps.info.outputs.username }}
   sha_short:
     description: "sha_short of target workflow jobs"
-    value: ${{ steps.request.outputs.sha_short }}
+    value: ${{ steps.info.outputs.sha_short }}
   url:
     description: "url of target workflow jobs"
-    value: ${{ steps.request.outputs.url }}
+    value: ${{ steps.info.outputs.url }}
   commit_message:
     description: "commit_message of target workflow jobs"
-    value: ${{ steps.request.outputs.commit_message }}
+    value: ${{ steps.info.outputs.commit_message }}
 
 runs:
   using: 'composite'
   steps:
+    id: info
     - name: Checkout repository
       uses: actions/checkout@v3
 
@@ -106,7 +107,7 @@ runs:
       if: ${{  !cancelled() && runner.os == 'Windows' && github.event_name == 'push' }}
       shell: powershell
       run: |
-          $sha= "${{ github.sha }}"
+          $sha = "${{ github.sha }}"
           $sha_short = git rev-parse --short $sha
           $url = "https://github.com/${{ github.event.repository.full_name }}/commit/$sha"
           Write-Host "url=$url" >> $env:GITHUB_OUTPUT
