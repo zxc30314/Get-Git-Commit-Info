@@ -30,11 +30,11 @@ jobs:
     - name: Extract Commit Info
       shell: pwsh
       run: |
-       $sha=${{ steps.extract_commit_info.outputs.sha }}"
-       $sha_short=${{ steps.extract_commit_info.outputs.sha_short }}"
-       $url=${{ steps.extract_commit_info.outputs.url }}"
-       $username=${{ steps.extract_commit_info.outputs.username }}"
-       $commit_message=${{ steps.extract_commit_info.outputs.commit_message }}"
+        $sha = "${{ steps.extract_commit_info.outputs.sha }}"
+        $sha_short = "${{ steps.extract_commit_info.outputs.sha_short }}"
+        $url = "${{ steps.extract_commit_info.outputs.url }}"
+        $username = "${{ steps.extract_commit_info.outputs.username }}"
+        $commit_message = "${{ steps.extract_commit_info.outputs.commit_message }}"
        
         if (-not $sha) { 
           Write-Error "sha is empty. Exiting the workflow."
