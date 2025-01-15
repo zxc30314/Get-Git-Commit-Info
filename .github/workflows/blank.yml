@@ -28,37 +28,34 @@ jobs:
         ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
     - name: Extract Commit Info
+      shell: pwsh
       run: |
-        sha=${{ steps.extract_commit_info.outputs.sha }}"
-        sha_short="${{ steps.extract_commit_info.outputs.sha_short }}"
-        url=${{ steps.extract_commit_info.outputs.url }}"
-        username=${{ steps.extract_commit_info.outputs.username }}"
-        commit_message= ${{ steps.extract_commit_info.outputs.commit_message }}"   
-
-        if [ -z "$sha" ]; then
-          echo "sha is empty. Exiting the workflow."
+       $sha=${{ steps.extract_commit_info.outputs.sha }}"
+       $sha_short=${{ steps.extract_commit_info.outputs.sha_short }}"
+       $url=${{ steps.extract_commit_info.outputs.url }}"
+       $username=${{ steps.extract_commit_info.outputs.username }}"
+       $commit_message=${{ steps.extract_commit_info.outputs.commit_message }}"
+       
+        if (-not $sha) { 
+          Write-Error "sha is empty. Exiting the workflow."
           exit 1
-        fi
-
-        if [ -z "$sha_short" ]; then
-          echo "sha_short is empty. Exiting the workflow."
+        }
+        if (-not $sha_short) { 
+          Write-Error "sha_short is empty. Exiting the workflow."
           exit 1
-        fi
-
-        if [ -z "$url" ]; then
-          echo "url is empty. Exiting the workflow."
+        }
+        if (-not $url) { 
+          Write-Error "url is empty. Exiting the workflow."
           exit 1
-        fi
-
-        if [ -z "$username" ]; then
-          echo "username is empty. Exiting the workflow."
+        }
+        if (-not $username) { 
+          Write-Error "username is empty. Exiting the workflow."
           exit 1
-        fi
-
-        if [ -z "$commit_message" ]; then
-          echo "commit_message is empty. Exiting the workflow."
+        }
+        if (-not $commit_message) { 
+          Write-Error "commit_message is empty. Exiting the workflow."
           exit 1
-        fi
+        }
         
     - name: Show Commit Information
       run: |
