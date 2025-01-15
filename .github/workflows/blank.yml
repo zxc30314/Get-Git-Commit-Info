@@ -23,7 +23,7 @@ jobs:
 
     - name: Extract Commit Info
       id: extract_commit_info
-      uses: zxc30314/git-commit-info-action@v1
+      uses: zxc30314/git-commit-info@main
       with:
         ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
