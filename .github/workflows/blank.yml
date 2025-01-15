@@ -1,0 +1,116 @@
+name: Git Commit Info
+
+on: 
+  workflow_dispatch:
+  workflow_call:
+    
+jobs:
+  declare_variables:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [Windows, Linux]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+
+    - name: Declare some variables for Linux
+      if: ${{ !cancelled() && runner.os == 'Linux' }}
+      shell: bash
+      run: |
+          commit_message=$(git log -1 --no-merges --pretty=%B)
+          echo "commit_message=$commit_message" >> $GITHUB_ENV
+          echo $commit_message
+
+    - name: Declare variables based on Pull Request event type for Linux
+      if: ${{  !cancelled() && runner.os == 'Linux' && github.event_name == 'pull_request' }}
+      shell: bash
+      run: |
+          sha=${{ github.event.pull_request.head.sha }}
+          sha_short=$(echo "$sha" | cut -c 1-7)
+          branch_ref="${GITHUB_REF#refs/heads/}"
+          converted_ref=$(echo "$branch_ref" | sed -n 's|refs/pull/\([0-9]*\)/merge|pull/\1|p')
+          url="https://github.com/${{ github.event.repository.full_name }}/$converted_ref/commits/$sha";
+          username=$(curl -H 'Accept: application/vnd.github.v3+json' -H "Authorization: Bearer ${{secrets.ACCESS_TOKEN}}" https://api.github.com/repos/${{ github.event.repository.full_name }}/commits/$sha | jq -r '.author.login')
+          echo "sha_short=$sha_short" >> "$GITHUB_ENV"
+          echo "url=$url" >> "$GITHUB_ENV"
+          echo "username=$username" >> "$GITHUB_ENV"
+          echo $sha
+          echo $sha_short
+          echo $converted_ref
+          echo $url
+          echo $username
+
+    - name: Declare variables based on Push event for Linux
+      if: ${{  !cancelled() && runner.os == 'Linux' && github.event_name == 'push' }}
+      shell: bash
+      run: |
+          sha=${{ github.sha }}
+          url=https://github.com/${{ github.event.repository.full_name }}/commit/$sha" >> "$GITHUB_ENV
+          sha_short=$(git rev-parse --short "$GITHUB_SHA")" 
+          username=$(curl -H 'Accept: application/vnd.github.v3+json' -H "Authorization: Bearer ${{secrets.ACCESS_TOKEN}}" https://api.github.com/repos/${{ github.event.repository.full_name }}/commits/$sha | jq -r '.author.login')
+          echo "sha_short=$sha_short">> "$GITHUB_ENV
+          echo "url=$url" >> "$GITHUB_ENV"
+          echo "username=$username" >> "$GITHUB_ENV"
+          echo $sha
+          echo $sha_short
+          echo $url
+          echo $username
+
+    - name: Declare variables for Windows
+      if: ${{!cancelled() && runner.os == 'Windows' }}
+      shell: powershell
+      run: |
+          $commit_message = $(git log -1 --no-merges --pretty=%B)
+          Write-Host "commit_message=$commit_message" >> $env:GITHUB_ENV
+          Write-Host $commit_message
+              
+    - name: Declare variables based on Pull Request event type for Windows 
+      if: ${{ !cancelled() && runner.os == 'Windows' && github.event_name == 'pull_request'}}
+      shell: powershell
+      run: |
+          $branch_ref = $env:GITHUB_REF -replace '^refs/heads/', ''
+          $converted_ref = ($branch_ref -replace '^refs/pull/(\d+)/merge$', 'pull/$1')
+          Write-Host "converted_ref=$converted_ref" >> $env:GITHUB_ENV
+          $sha = "${{ github.event.pull_request.head.sha }}"
+          $sha_short = $sha.Substring(0, 7)
+          Write-Host "sha_short=$sha_short" >> $env:GITHUB_ENV
+          $url = "https://github.com/${{ github.event.repository.full_name }}/$converted_ref/commits/$sha"
+          Write-Host "url=$url" >> $env:GITHUB_ENV
+          $authHeader = @{
+              "Authorization" = "Bearer ${{secrets.ACCESS_TOKEN}}"
+              "Accept" = "application/vnd.github.v3+json"
+          }
+          $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.event.repository.full_name }}/commits/$sha" -Headers $authHeader    
+          $username = $response.author.login
+          Write-Host "username=$username" >> $env:GITHUB_ENV
+          Write-Host $sha
+          Write-Host $sha_short
+          Write-Host $converted_ref
+          Write-Host $url
+          Write-Host $username
+
+    - name: Declare variables based on Push event for Windows on Push
+      if: ${{  !cancelled() && runner.os == 'Windows' && github.event_name == 'push' }}
+      shell: powershell
+      run: |
+          $sha= "${{ github.sha }}"
+          $sha_short = git rev-parse --short $env:GITHUB_SHA
+          $url = "https://github.com/${{ github.event.repository.full_name }}/commit/$sha"
+          Write-Host "url=$url" >> $env:GITHUB_ENV
+          $authHeader = @{
+              "Authorization" = "Bearer ${{secrets.ACCESS_TOKEN}}"
+              "Accept" = "application/vnd.github.v3+json"
+          }
+          $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.event.repository.full_name }}/commits/$sha" -Headers $authHeader
+          $username = $response.author.login
+          Write-Host "username=$username" >> $env:GITHUB_ENV
+          Write-Host "url=$url" >> $env:GITHUB_ENV
+          Write-Host $sha
+          Write-Host $sha_short
+          Write-Host $url
+          Write-Host $username
