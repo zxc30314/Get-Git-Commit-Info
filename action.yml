@@ -22,7 +22,11 @@ outputs:
   commit_message:
     description: "commit_message of target workflow jobs"
     value: ${{ steps.extract_commit_info.outputs.commit_message }}
-
+    
+branding:
+  icon: "info"
+  color: "gray-dark"
+  
 runs:
   using: 'composite'
   steps:
