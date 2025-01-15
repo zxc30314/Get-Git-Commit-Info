@@ -41,7 +41,7 @@ runs:
         }
 
         $authHeader = @{
-          "Authorization" = "Bearer ${{ secrets.ACCESS_TOKEN }}"
+          "Authorization" = "Bearer ${{ inputs.ACCESS_TOKEN }}"
           "Accept" = "application/vnd.github.v3+json"
         }
         $commit_message = git log -1 --no-merges --pretty=%B
